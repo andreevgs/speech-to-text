@@ -4,6 +4,14 @@ import { startRecording, stopRecording } from './recorderHelpers';
 
 // https://cloud.google.com/speech-to-text/docs/reference/rest/v1/RecognitionConfig
 import { GoogleCloudRecognitionConfig } from './GoogleCloudRecognitionConfig';
+import {
+  algoritms,
+  computerScienceDef, distributed,
+  engineering,
+  greetings,
+  howAreYouAnswers,
+  intelligent, parallel, parallelDistributed, whatCanDiscuss, whatCanDo
+} from '../commands/commands';
 
 // https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition
 export interface SpeechRecognitionProperties {
@@ -65,11 +73,11 @@ export interface UseSpeechToTextTypes {
 
 export default function useSpeechToText({
   continuous,
-  crossBrowser,
+  crossBrowser = true,
   googleApiKey,
   googleCloudRecognitionConfig,
-  onStartSpeaking,
-  onStoppedSpeaking,
+  onStartSpeaking = () => { console.log('started'); },
+  onStoppedSpeaking = () => { console.log('stopped'); },
   speechRecognitionProperties = { interimResults: true },
   timeout = 10000,
   useOnlyGoogleCloud = false,
@@ -144,10 +152,21 @@ export default function useSpeechToText({
         if (interimResults) {
           if (result.isFinal) {
             setInterimResult(undefined);
-            setResults((prevResults) => [
-              ...prevResults,
-              { transcript, timestamp }
-            ]);
+            // setResults((prevResults) => [
+            //   ...prevResults,
+            //   { transcript, timestamp }
+            // ]);
+            setResults((prevResults) => {
+              let answer: string = '';
+              if (transcript == 'hello' || transcript == 'hi'){
+                answer = greetings[Math.random() * 3];
+              }
+              console.log('answer: ', answer);
+              return [
+                ...prevResults,
+                { transcript: answer, timestamp }
+              ]
+            });
             setLegacyResults((prevResults) => [...prevResults, transcript]);
           } else {
             let concatTranscripts = '';
@@ -160,10 +179,21 @@ export default function useSpeechToText({
             setInterimResult(concatTranscripts);
           }
         } else {
-          setResults((prevResults) => [
-            ...prevResults,
-            { transcript, timestamp }
-          ]);
+          // setResults((prevResults) => [
+          //   ...prevResults,
+          //   { transcript, timestamp }
+          // ]);
+          setResults((prevResults) => {
+            let answer: string = '';
+            if (transcript == 'hello' || transcript == 'hi'){
+              answer = greetings[Math.random() * 3];
+            }
+            console.log('answer: ', answer);
+            return [
+              ...prevResults,
+              { transcript: answer, timestamp }
+            ]
+          });
           setLegacyResults((prevResults) => [...prevResults, transcript]);
         }
       };
@@ -221,6 +251,7 @@ export default function useSpeechToText({
 
     speechEvents.on('speaking', () => {
       if (onStartSpeaking) onStartSpeaking();
+      // startSpeechToText();
 
       // Clear previous recording timeout on every speech event
       clearTimeout(timeoutId.current);
@@ -228,7 +259,7 @@ export default function useSpeechToText({
 
     speechEvents.on('stopped_speaking', () => {
       if (onStoppedSpeaking) onStoppedSpeaking();
-
+      // stopSpeechToText();
       // Stops current recording and sends audio string to google cloud.
       // recording will start again after google cloud api
       // call if `continuous` prop is true. Until the api result
@@ -316,14 +347,68 @@ export default function useSpeechToText({
 
         setLegacyResults((prevResults) => [...prevResults, transcript]);
 
-        setResults((prevResults) => [
-          ...prevResults,
-          {
-            speechBlob: blob,
-            transcript,
-            timestamp: Math.floor(Date.now() / 1000)
+        // setResults((prevResults) => [
+        //   ...prevResults,
+        //   {
+        //     speechBlob: blob,
+        //     transcript,
+        //     timestamp: Math.floor(Date.now() / 1000)
+        //   }
+        // ]);
+
+        setResults((prevResults) => {
+          let answer: string = '';
+          let question = transcript.toLowerCase();
+          if (question == 'hello' || question == 'hi'){
+            const random = Math.floor(Math.random() * (3 - 0) + 0);
+            console.log('rand: ', random);
+            answer = greetings[random];
           }
-        ]);
+          else if (question == 'how are you' || question == 'how are you doing' || question == 'what\'s up'){
+            const random = Math.floor(Math.random() * (4 - 0) + 0);
+            console.log('rand: ', random);
+            answer = howAreYouAnswers[random];
+          }
+          else if (question == 'what is computer science' || question == 'what is informatics'){
+            answer = computerScienceDef[0];
+          }
+          else if (question == 'what can you do'){
+            answer = whatCanDo[0];
+          }
+          else if (question == 'what can we discuss'){
+            answer = whatCanDiscuss[0];
+          }
+          else if (question == 'what is algorithm' || question == 'what is algorithms' || question == 'what can you tell me about algorithms'){
+            answer = algoritms[0];
+          }
+          else if (question == 'what is intelligent system' || question == 'which system we can define as an intelligent'){
+            answer = intelligent[0];
+          }
+          else if (question == 'what is system engineering'){
+            answer = engineering[0];
+          }
+          else if (question == 'parallel computing'){
+            answer = parallel[0];
+          }
+          else if (question == 'distributed computing'){
+            answer = distributed[0];
+          }
+          else if (question == 'difference between parallel and distributed computing' || question == 'difference between distributed and parallel computing'){
+            answer = parallelDistributed[0];
+          }
+          else {
+            answer = transcript;
+          }
+          console.log('answer: ', answer);
+          return [
+            ...prevResults,
+            {
+              speechBlob: blob,
+              transcript: answer,
+              timestamp: Math.floor(Date.now() / 1000)
+            }
+          ]
+        });
       }
 
       if (continuous) {
